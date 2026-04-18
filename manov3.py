@@ -3,8 +3,9 @@ import pygame as pg
 import mediapipe as mp
 import webbrowser
 
-# Configuración inicial
+#accede al modulo de detección de manos
 mp_hands = mp.solutions.hands
+#es para dibujar los puntos y conecciones de las manos
 mp_draw = mp.solutions.drawing_utils
 
 #variables que se usarán mas tarde
@@ -15,33 +16,33 @@ screen = None
 url = "https://youtu.be/GbrGs_2B64U?si=ZWCziR4m3wqCvEE-"
 bandera = True
 
-#que cámara usa, 
+#que cámara usa
 cap = cv2.VideoCapture(0)
 
-
+#se usa para asegurarse de que lo que se está detectando es una mano, para seguir una detectada y para decir cuantas manos puede detectar como máximo
 with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5, max_num_hands=2) as hands:
+    #bucle que va actualizando fotograma por fotograma
     while running:
         ret, frame = cap.read()
         if not ret: break
 
+        #voltear la imagen
         frame = cv2.flip(frame, 1)
+
+        #configuración de la pantalla
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #devuelve los puntos de la mano
         results = hands.process(rgb_frame)
 
         if results.multi_hand_landmarks:
-            # Usamos enumerate para obtener el índice y emparejar landmarks con lateralidad
             for idx, hand_landmarks in enumerate(results.multi_hand_landmarks):
-                # Obtener la etiqueta (Left/Right) de la mano actual
                 label = results.multi_handedness[idx].classification[0].label
                 
-                # Dibujar las conexiones
+                #dibujar las conexiones
                 mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-                # --- FILTRO POR MANO IZQUIERDA Y GESTO ---
                 if label == "Left":
-                    # Lógica del índice levantado (Punta punto 8 < Nudillo punto 6)
                     indice_arriba = hand_landmarks.landmark[8].y < hand_landmarks.landmark[6].y
-                    # Dedo medio abajo (Punta punto 12 > Nudillo punto 10)
                     indice_abajo = hand_landmarks.landmark[12].y > hand_landmarks.landmark[6].y
                     medio_abajo = hand_landmarks.landmark[12].y > hand_landmarks.landmark[10].y
                     menique_abajo = hand_landmarks.landmark[20].y > hand_landmarks.landmark[18].y
@@ -60,9 +61,8 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5, m
                         bandera = True
 
                 
-        # --- MANEJO DE PYGAME SI ESTÁ ABIERTO ---
         if pygame_ventana_abierta:
-            screen.fill((50, 150, 255)) # Color de fondo
+            screen.fill((50, 150, 255)) 
             pg.display.update()
             
             for event in pg.event.get():
@@ -73,7 +73,7 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5, m
         frame = cv2.resize(frame, (WIDTH, HEIGTH))
         cv2.imshow('Detector de Gestos', frame)
 
-        if cv2.waitKey(1) & 0xFF == 27: # ESC para salir
+        if cv2.waitKey(1) & 0xFF == 27: 
             running = False
 
 cap.release()
