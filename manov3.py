@@ -35,32 +35,40 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5, m
         results = hands.process(rgb_frame)
 
         if results.multi_hand_landmarks:
-            for idx, hand_landmarks in enumerate(results.multi_hand_landmarks):
-                label = results.multi_handedness[idx].classification[0].label
+            #itera sobre cada mano
+            for mano, hand_landmarks in enumerate(results.multi_hand_landmarks):
+                #etiquetar mano con left o right
+                label = results.multi_handedness[mano].classification[0].label
                 
                 #dibujar las conexiones
                 mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
+                #si es la mano izquierda
                 if label == "Left":
+                    #compara los puntos en la posición "y" para ver si estana arriba o abajo
                     indice_arriba = hand_landmarks.landmark[8].y < hand_landmarks.landmark[6].y
                     indice_abajo = hand_landmarks.landmark[12].y > hand_landmarks.landmark[6].y
                     medio_abajo = hand_landmarks.landmark[12].y > hand_landmarks.landmark[10].y
                     menique_abajo = hand_landmarks.landmark[20].y > hand_landmarks.landmark[18].y
                     anular_abajo = hand_landmarks.landmark[16].y > hand_landmarks.landmark[14].y
 
+                    #si solo el indice está arriba
                     if indice_arriba and medio_abajo and menique_abajo and anular_abajo:
                         if not pygame_ventana_abierta:
+                            #ingorar lo de pygame (andaba experimentando)
                             pg.init()
                             #screen = pg.display.set_mode((400, 300))
                             #pg.display.set_caption("Activado por Mano Izquierda")
                             #pygame_ventana_abierta = True
+                            #si la bandera es True, abre el url y la convierte en False para que no se abra muntiples veces
                             if bandera:
                                 webbrowser.open(url)
                                 bandera = False
+                    #si todos los dedos están abajo, se puede volver a abrir el url
                     elif indice_abajo and medio_abajo and menique_abajo and anular_abajo:
                         bandera = True
 
-                
+        #mas cosas de experimentos
         if pygame_ventana_abierta:
             screen.fill((50, 150, 255)) 
             pg.display.update()
@@ -76,6 +84,7 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5, m
         if cv2.waitKey(1) & 0xFF == 27: 
             running = False
 
+#cerrar todo 
 cap.release()
 cv2.destroyAllWindows()
 if pygame_ventana_abierta: pg.quit()
